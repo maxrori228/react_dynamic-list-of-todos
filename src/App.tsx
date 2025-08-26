@@ -8,47 +8,64 @@ import { TodoModal } from './components/TodoModal';
 import { Loader } from './components/Loader';
 
 import { Todo } from './types/Todo';
-import { getTodos } from './api';
+import { getTodos, getUser } from './api';
+import { User } from './types/User';
 
 export const App: React.FC = () => {
-  const [todos, SetTodos] = useState<Todo[]>([]);
-  const [loading, SetLoading] = useState(true);
-  const [showError, SetShowError] = useState('');
-  const [isModalOpen, SetIsModalOpen] = useState(false);
-  const [selectedTodo, SetSelectedTodo] = useState<Todo | null>(null);
-  const [query, SetQuery] = useState('');
-  const [chosenFilter, SetChosenFilter] = useState('all');
+  const [user, setUser] = useState<User | null>(null);
+  const [isUserLoading, setIsUserLoading] = useState(false);
+  const [userError, setUserError] = useState<string | null>(null);
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showError, setShowError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
+  const [query, setQuery] = useState('');
+  const [chosenFilter, setChosenFilter] = useState('all');
 
   useEffect(() => {
     const loadTodos = async () => {
       try {
         const data = await getTodos();
 
-        SetTodos(data);
+        setTodos(data);
       } catch {
-        SetShowError('Loading Failed!');
+        setShowError('Loading Failed!');
       } finally {
-        SetLoading(false);
+        setLoading(false);
       }
     };
 
     loadTodos();
   }, []);
 
-  const handleOpenMod = (todo: Todo) => {
-    if (todo) {
-      SetSelectedTodo(todo);
-      SetIsModalOpen(true);
+  const handleOpenMod = async (todo: Todo) => {
+    if (!todo) return;
+
+    setSelectedTodo(todo);
+    setIsModalOpen(true);
+
+    setUser(null);
+    setUserError(null);
+    setIsUserLoading(true);
+
+    try {
+      const fetchedUser = await getUser(todo.userId);
+      setUser(fetchedUser);
+    } catch {
+      setUserError('Failed to load user');
+    } finally {
+      setIsUserLoading(false);
     }
   };
 
   const handeCloseMod = () => {
-    SetIsModalOpen(false);
-    SetSelectedTodo(null);
+    setIsModalOpen(false);
+    setSelectedTodo(null);
   };
 
   const enableTitle = () => {
-    SetQuery('');
+    setQuery('');
   };
 
   const getVisibleTodos = (
@@ -89,10 +106,10 @@ export const App: React.FC = () => {
             <div className="block">
               <TodoFilter
                 enableTitle={enableTitle}
-                SetQuery={SetQuery}
+                setQuery={setQuery}
                 query={query}
                 chosenFilter={chosenFilter}
-                SetChosenFilter={SetChosenFilter}
+                setChosenFilter={setChosenFilter}
               />
             </div>
 
@@ -112,8 +129,14 @@ export const App: React.FC = () => {
         </div>
       </div>
 
-      {isModalOpen && (
-        <TodoModal closeMod={handeCloseMod} todo={selectedTodo} />
+      {isModalOpen && selectedTodo && (
+        <TodoModal
+          closeMod={handeCloseMod}
+          todo={selectedTodo}
+          user={user}
+          isUserLoading={isUserLoading}
+          userError={userError}
+        />
       )}
     </>
   );

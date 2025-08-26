@@ -7,26 +7,29 @@ import { getUser } from '../../api';
 interface Props {
   todo: Todo | null;
   closeMod: () => void;
+  user: User | null;
+  isUserLoading: boolean;
+  userError: string | null;
 }
 
 export const TodoModal: React.FC<Props> = ({ todo, closeMod }) => {
-  const [modalLoading, SetModalLoading] = useState(false);
-  const [user, SetUser] = useState<User | null>(null);
-  const [error, SetError] = useState<string | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const loadUser = async (userId: number) => {
     try {
-      SetUser(null);
-      SetError(null);
-      SetModalLoading(true);
+      setUser(null);
+      setError(null);
+      setModalLoading(true);
 
       const fetchedUser = await getUser(userId);
 
-      SetUser(fetchedUser);
+      setUser(fetchedUser);
     } catch {
-      SetError('User loading failed!');
+      setError('User loading failed!');
     } finally {
-      SetModalLoading(false);
+      setModalLoading(false);
     }
   };
 
