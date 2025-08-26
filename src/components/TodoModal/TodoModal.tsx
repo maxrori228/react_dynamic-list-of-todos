@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Loader } from '../Loader';
 import { Todo } from '../../types/Todo';
 import { User } from '../../types/User';
-import { getUser } from '../../api';
 
 interface Props {
   todo: Todo | null;
@@ -12,50 +11,35 @@ interface Props {
   userError: string | null;
 }
 
-export const TodoModal: React.FC<Props> = ({ todo, closeMod }) => {
-  const [modalLoading, setModalLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadUser = async (userId: number) => {
-    try {
-      setUser(null);
-      setError(null);
-      setModalLoading(true);
-
-      const fetchedUser = await getUser(userId);
-
-      setUser(fetchedUser);
-    } catch {
-      setError('User loading failed!');
-    } finally {
-      setModalLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (todo) {
-      loadUser(todo.userId);
-    }
-  }, [todo]);
+export const TodoModal: React.FC<Props> = ({
+  todo,
+  closeMod,
+  user,
+  isUserLoading,
+  userError,
+}) => {
+  if (!todo) return null;
 
   return (
     <div className="modal is-active" data-cy="modal">
       <div className="modal-background" />
 
-      {modalLoading && <Loader />}
+      {isUserLoading && <Loader />}
 
-      {!modalLoading && !error && user && (
+      {!isUserLoading && userError && (
+        <p className="has-text-danger">{userError}</p>
+      )}
+
+      {!isUserLoading && user && (
         <div className="modal-card">
           <header className="modal-card-head">
             <div
               className="modal-card-title has-text-weight-medium"
               data-cy="modal-header"
             >
-              Todo #{todo?.id}
+              Todo #{todo.id}
             </div>
 
-            {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
             <button
               type="button"
               className="delete"
@@ -66,14 +50,16 @@ export const TodoModal: React.FC<Props> = ({ todo, closeMod }) => {
 
           <div className="modal-card-body">
             <p className="block" data-cy="modal-title">
-              {todo?.title}
+              {todo.title}
             </p>
 
             <p className="block" data-cy="modal-user">
               <strong
-                className={`${todo?.completed ? 'has-text-success' : 'has-text-danger'}`}
+                className={
+                  todo.completed ? 'has-text-success' : 'has-text-danger'
+                }
               >
-                {todo?.completed ? 'Done' : 'Planned'}
+                {todo.completed ? 'Done' : 'Planned'}
               </strong>
 
               {' by '}
